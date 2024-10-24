@@ -11,7 +11,7 @@ object MyModule:
   // Exercise 1
 
   def square(n: Int): Int =
-    ???
+    n * n
 
   private def formatAbs(x: Int): String =
     s"The absolute value of ${x} is ${abs(x)}"
@@ -22,6 +22,8 @@ object MyModule:
   @main def printAbs: Unit =
     assert(magic - 84 == magic.-(84))
     println(formatAbs(magic - 100))
+    println(square(5))
+    println(f"fib 10 is ${fib(10)}")
 
 end MyModule
 
@@ -30,13 +32,21 @@ end MyModule
 // Exercise 3
 
 def fib(n: Int): Int =
-  ???
+  @annotation.tailrec
+  def go(n: Int, prev: Int, cur: Int): Int =
+    if n <= 0 then prev
+    else go(n - 1, cur, prev + cur)
+  go(n, 0, 1)
 
 // Exercise 4
 
-def isSorted[A](as: Array[A], ordered: (A, A) => Boolean): Boolean =
-  ???
-
+def isSorted[A](as: Array[A], ordered: (A, A) => Boolean): Boolean ={
+  as.zip(as.tail).foldLeft(true) { (acc, pair) =>
+    acc && ordered(pair._1, pair._2)
+  }
+}
+//using higher order function
+  
 // Exercise 5
 
 def curry[A, B, C](f: (A, B) => C): A => (B => C) =

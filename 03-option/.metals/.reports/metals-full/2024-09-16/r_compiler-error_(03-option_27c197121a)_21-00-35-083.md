@@ -1,11 +1,22 @@
+file://<WORKSPACE>/Exercises.scala
+### scala.MatchError: TypeDef(B,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 2516
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-//handin by Nicolai Seloy (nsel)
 
 package adpro.option
 
 import java.awt.Point
-import scala.collection.View.Filter
 
 // Exercise 1
 
@@ -103,7 +114,7 @@ enum Option[+A]:
     case Some(get) if(p(get)) => Some(get) 
     case Some(get) if!(p(get)) => None
     case None => None
-    case _ => ??? //compiler complains.. i dont know how this is reachable unless some(None) is possible.. but that seems weird
+    case _ => ??? //compiler complains.@@
   
 
   // Scroll down for Exercise 7, in the bottom of the file, outside Option
@@ -112,7 +123,7 @@ enum Option[+A]:
     case None => true
     case Some(a) => p(a)
 
-  
+
 
 
 object Option:
@@ -120,19 +131,17 @@ object Option:
   // Exercise 9
 
   def map2[A, B, C](ao: Option[A], bo: Option[B])(f: (A,B) => C): Option[C] =
-    for 
-      x1 <- ao
-      x2 <- bo
-    yield f(x1,x2)
+    ???
 
   // Exercise 10
 
   def sequence[A](aos: List[Option[A]]): Option[List[A]] =
-      aos.foldRight[Option[List[A]]](Some(List.empty[A]))(map2(_,_)(_::_))
+    ???
+
   // Exercise 11
 
   def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
-    as.foldRight[Option[List[B]]](Some(List.empty[B]))((a, acc) => map2(f(a), acc)(_::_))
+    ???
 
 end Option
 
@@ -148,16 +157,11 @@ def headOption[A](lst: List[A]): Option[A] = lst match
 
 // Exercise 7
 
-def headGrade(lst: List[(String,Int)]): Option[Int] = lst match
-  case Nil => None
-  case head :: next => Some(head._2)
-
+def headGrade(lst: List[(String,Int)]): Option[Int] =
+  ???
 
 def headGrade1(lst: List[(String,Int)]): Option[Int] =
-  for
-    x1 <- headOption(lst)
-    x2 <- Some(x1._2)
-  yield x2
+  ???
 
 // Implemented in the text book
 
@@ -168,13 +172,25 @@ def mean(xs: Seq[Double]): Option[Double] =
 // Exercise 8
 
 def variance(xs: Seq[Double]): Option[Double] =
-  mean(xs).flatMap((m => mean(xs.map(x => math.pow(x -m,2)))))
+  ???
+
 // Scroll up, to the Option object for Exercise 9
 
-def variance2(xs: Seq[Double]): Option[Double] =
-  for
-    x1 <- mean(xs)
-    x2 <- mean(xs.map(x => math.pow(x -x1,2)))
-  yield x2
+```
 
-// i find number two easier to understand.. it feels more like a declarative way to do it instead of everything being oneliners and functions wrapping other functions
+
+
+#### Error stacktrace:
+
+```
+dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents$$anonfun$2(KeywordsCompletions.scala:218)
+	scala.Option.map(Option.scala:242)
+	dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents(KeywordsCompletions.scala:219)
+	dotty.tools.pc.completions.KeywordsCompletions$.contribute(KeywordsCompletions.scala:44)
+	dotty.tools.pc.completions.Completions.completions(Completions.scala:114)
+	dotty.tools.pc.completions.CompletionProvider.completions(CompletionProvider.scala:90)
+	dotty.tools.pc.ScalaPresentationCompiler.complete$$anonfun$1(ScalaPresentationCompiler.scala:146)
+```
+#### Short summary: 
+
+scala.MatchError: TypeDef(B,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)

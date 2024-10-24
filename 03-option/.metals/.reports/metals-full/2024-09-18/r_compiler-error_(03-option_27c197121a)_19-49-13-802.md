@@ -1,11 +1,22 @@
+file://<WORKSPACE>/Exercises.scala
+### scala.MatchError: TypeDef(A,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 3866
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-//handin by Nicolai Seloy (nsel)
 
 package adpro.option
 
 import java.awt.Point
-import scala.collection.View.Filter
 
 // Exercise 1
 
@@ -120,19 +131,17 @@ object Option:
   // Exercise 9
 
   def map2[A, B, C](ao: Option[A], bo: Option[B])(f: (A,B) => C): Option[C] =
-    for 
-      x1 <- ao
-      x2 <- bo
-    yield f(x1,x2)
+    ???
 
   // Exercise 10
 
   def sequence[A](aos: List[Option[A]]): Option[List[A]] =
-      aos.foldRight[Option[List[A]]](Some(List.empty[A]))(map2(_,_)(_::_))
+    ???
+
   // Exercise 11
 
   def traverse[A, B](as: List[A])(f: A => Option[B]): Option[List[B]] =
-    as.foldRight[Option[List[B]]](Some(List.empty[B]))((a, acc) => map2(f(a), acc)(_::_))
+    ???
 
 end Option
 
@@ -149,8 +158,8 @@ def headOption[A](lst: List[A]): Option[A] = lst match
 // Exercise 7
 
 def headGrade(lst: List[(String,Int)]): Option[Int] = lst match
-  case Nil => None
   case head :: next => Some(head._2)
+  case Nil => None
 
 
 def headGrade1(lst: List[(String,Int)]): Option[Int] =
@@ -171,10 +180,22 @@ def variance(xs: Seq[Double]): Option[Double] =
   mean(xs).flatMap((m => mean(xs.map(x => math.pow(x -m,2)))))
 // Scroll up, to the Option object for Exercise 9
 
-def variance2(xs: Seq[Double]): Option[Double] =
-  for
-    x1 <- mean(xs)
-    x2 <- mean(xs.map(x => math.pow(x -x1,2)))
-  yield x2
+d@@
+```
 
-// i find number two easier to understand.. it feels more like a declarative way to do it instead of everything being oneliners and functions wrapping other functions
+
+
+#### Error stacktrace:
+
+```
+dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents$$anonfun$2(KeywordsCompletions.scala:218)
+	scala.Option.map(Option.scala:242)
+	dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents(KeywordsCompletions.scala:219)
+	dotty.tools.pc.completions.KeywordsCompletions$.contribute(KeywordsCompletions.scala:44)
+	dotty.tools.pc.completions.Completions.completions(Completions.scala:114)
+	dotty.tools.pc.completions.CompletionProvider.completions(CompletionProvider.scala:90)
+	dotty.tools.pc.ScalaPresentationCompiler.complete$$anonfun$1(ScalaPresentationCompiler.scala:146)
+```
+#### Short summary: 
+
+scala.MatchError: TypeDef(A,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)

@@ -1,6 +1,18 @@
+file://<WORKSPACE>/Exercises.scala
+### scala.MatchError: TypeDef(A,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 2305
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-// handin by nsel
 
 package adpro.prop
 
@@ -89,15 +101,16 @@ object Gen:
 
   def unit[A](a: => A): Gen[A] = State.unit(a)
   def boolean: Gen[Boolean] = State(RNG.boolean)
+  def double: Gen[Double] = State(RNG.double) // I could only solve this by changing RNG.double..@@
 
-  def double: Gen[Double] = 
-    for 
-       d <- State[RNG,Double] (RNG.double)
-       negate <- boolean
-       invert <- boolean //monadic
-       d1 = if invert then 1.0 / d else d //non monad
-       d2 = if negate then -1 * d1 else d1
-    yield d2 
+  //def double: Gen[Double] = 
+  //  for 
+  //     d <- State[RNG,Double] (RNG.double)
+  //     negate <- boolean
+  //     invert <- boolean //monadic
+  //     d1 = if invert then 1.0 / d else d //non monad
+  //     d2 = if negate then -1 * d1 else d1
+  //  yield d2 
 
   // Exercise 7
   
@@ -310,3 +323,22 @@ object Exercise_16:
 end Exercise_16
 
 // vim:cc=80:conceallevel=1
+
+```
+
+
+
+#### Error stacktrace:
+
+```
+dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents$$anonfun$2(KeywordsCompletions.scala:218)
+	scala.Option.map(Option.scala:242)
+	dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents(KeywordsCompletions.scala:219)
+	dotty.tools.pc.completions.KeywordsCompletions$.contribute(KeywordsCompletions.scala:44)
+	dotty.tools.pc.completions.Completions.completions(Completions.scala:114)
+	dotty.tools.pc.completions.CompletionProvider.completions(CompletionProvider.scala:90)
+	dotty.tools.pc.ScalaPresentationCompiler.complete$$anonfun$1(ScalaPresentationCompiler.scala:146)
+```
+#### Short summary: 
+
+scala.MatchError: TypeDef(A,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)

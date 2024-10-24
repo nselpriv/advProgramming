@@ -1,12 +1,23 @@
+file://<WORKSPACE>/Exercises.scala
+### scala.MatchError: TypeDef(A,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 2822
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-// handin by nsel
 
 package adpro.prop
 
 import adpro.state.*
 import adpro.state.RNG.nonNegativeInt
-import org.scalacheck.Arbitrary
 
 val TODO = 42
 
@@ -89,15 +100,16 @@ object Gen:
 
   def unit[A](a: => A): Gen[A] = State.unit(a)
   def boolean: Gen[Boolean] = State(RNG.boolean)
+  def double: Gen[Double] = State(RNG.double)
 
-  def double: Gen[Double] = 
-    for 
-       d <- State[RNG,Double] (RNG.double)
-       negate <- boolean
-       invert <- boolean //monadic
-       d1 = if invert then 1.0 / d else d //non monad
-       d2 = if negate then -1 * d1 else d1
-    yield d2 
+  //def double: Gen[Double] = 
+  //  for 
+  //     d <- State[RNG,Double] (RNG.double)
+  //     negate <- boolean
+  //     invert <- boolean //monadic
+  //     d1 = if invert then 1.0 / d else d //non monad
+  //     d2 = if negate then -1 * d1 else d1
+  //  yield d2 
 
   // Exercise 7
   
@@ -109,14 +121,14 @@ object Gen:
 
   // Exercise 8
 
-  //So that listOfN can be generic and reusable across all gen, we dont need to modify Gen to do it and can expect it to work on all types. 
+  //So that listOfN can be generic and reusable across all gen, we dont need to modify Gen to do it and can expect it to work on all types.@@
 
   // Exercise 9
 
   extension [A](self: Gen[A])
 
     def flatMap[B](f: A => Gen[B]): Gen[B] =
-      State.flatMap(self)(f)
+      ???
 
     // It will be convenient to also have map (uses flatMap)
     def map[B](f: A => B): Gen[B] = 
@@ -127,14 +139,14 @@ object Gen:
 
   extension [A](self: Gen[A])
     def listOf(size: Gen[Int]): Gen[List[A]] =
-      size.flatMap(n => self.listOfN(n))
+      ???
 
 
   // Exercise 11
 
   extension [A](self: Gen[A])
     def union (that: Gen[A]): Gen[A] =
-      boolean.flatMap(b => if b then self else that)
+      ???
 
 end Gen
 
@@ -148,22 +160,22 @@ object Exercise_12:
   // listOf are tested (so rename if you use another than the first)
 
   def listOfN[A: Gen](n: Int): Gen[List[A]] =
-    summon[Gen[A]].listOfN(n)
+    ???
   
   def listOfN_[A: Gen]: Int => Gen[List[A]] =
-    (n: Int) => summon[Gen[A]].listOfN(n)
+    ???
   
   def listOfN__ [A](n: Int)(using genA: Gen[A]): Gen[List[A]] =
-    genA.listOfN(n)
+    ???
 
   // Choose one of the following templates, but note only listOfN and
   // listOf are tested (so rename if you use another than the first)
   
   def listOf[A: Gen](using genInt: Gen[Int]): Gen[List[A]] =
-    summon[Gen[A]].listOf(genInt)
+    ???
   
   def listOf_[A] (using genInt: Gen[Int], genA: Gen[A]): Gen[List[A]] =
-    genA.listOf(genInt)
+    ???
 
 end Exercise_12
 
@@ -214,15 +226,11 @@ def forAll[A](as: Gen[A])(f: A => Boolean): Prop =
 def forAllNotSized[A] = forAll[A]
   
 extension (self: Prop)
-  infix def && (that: Prop): Prop = (maxSize, tcs, rng) => self(maxSize,tcs,rng) match
-    case Passed => that(maxSize,tcs,rng)
-    case Falsified(failure, successes) => self(maxSize,tcs,rng)
+  infix def && (that: Prop): Prop = (maxSize, tcs, rng) => 
+    ???
   
-  
-  infix def || (that: Prop): Prop = (maxSize, tcs, rng) => self(maxSize, tcs,rng) match
-    case Passed => self(maxSize, tcs,rng)
-    case Falsified(failure, successes) => that(maxSize, tcs,rng)
-  
+  infix def || (that: Prop): Prop = (maxSize, tcs, rng) =>
+    ???
 
 
 // Exercise 14
@@ -232,13 +240,13 @@ opaque type SGen[+A] = Int => Gen[A]
 
 extension [A](self: Gen[A])
   def unsized: SGen[A] =
-    _ => self
+    ???
 
 // Exercise 15
 
 extension [A](self: Gen[A]) 
   def list: SGen[List[A]] =
-    self.listOfN(_)
+    ???
 
 // A sized implementation of prop, takes MaxSize to generate
 // test cases of given size.  
@@ -251,12 +259,12 @@ object SGen:
 
   object Prop:
 
-    def forAll[A](g: SGen[A], minSize: Int = 1, maxSize: Int = 10)(f: A => Boolean): Prop =
+    def forAll[A](g: SGen[A])(f: A => Boolean): Prop =
       (max, n, rng) =>
-        val casesPerSize = (n.toInt - 1) / (maxSize - minSize + 1) + 1
+        val casesPerSize = (n.toInt - 1)/max.toInt + 1
         val props: LazyList[Prop] =
-          LazyList.from(minSize)
-            .take((n.toInt min maxSize) - minSize + 1)
+          LazyList.from(0)
+            .take((n.toInt min max.toInt) + 1)
             .map { i => forAllNotSized(g(i))(f) }
         val prop: Prop =
           props.map[Prop](p => (max, n, rng) => 
@@ -288,25 +296,35 @@ val nonEmptyList: SGen[List[Int]] =
 object Exercise_16:
   
   import SGen.*
-  
+
   // The properties are put into a function taking `minimum` as argument to
   // allow the teachers to test them with different mutants of `minimum`.
-
-  //NOTE - I had to introduce limitation to forALL since it ran forever.. i added min and max to it as you can see below.. how are you supposed to solve this without doing that? 
-  //I also tried adjusting the Gen.choose for nonEmptyList, but that did not do anything to help  
+  
   def p1Min(minimum: List[Int] => Int): Prop = 
-    Prop.forAll(nonEmptyList, -10, 10) { list =>
-      val min = minimum(list)
-      list.forall(_ >= min)
-    }
-    
+    ???
   
   def p2Min(minimum: List[Int] => Int): Prop = 
-    Prop.forAll(nonEmptyList, -10, 10) { list =>
-      val min = minimum(list)
-      list.contains(min)
-    }
+    ???
 
 end Exercise_16
 
 // vim:cc=80:conceallevel=1
+
+```
+
+
+
+#### Error stacktrace:
+
+```
+dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents$$anonfun$2(KeywordsCompletions.scala:218)
+	scala.Option.map(Option.scala:242)
+	dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents(KeywordsCompletions.scala:219)
+	dotty.tools.pc.completions.KeywordsCompletions$.contribute(KeywordsCompletions.scala:44)
+	dotty.tools.pc.completions.Completions.completions(Completions.scala:114)
+	dotty.tools.pc.completions.CompletionProvider.completions(CompletionProvider.scala:90)
+	dotty.tools.pc.ScalaPresentationCompiler.complete$$anonfun$1(ScalaPresentationCompiler.scala:146)
+```
+#### Short summary: 
+
+scala.MatchError: TypeDef(A,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)

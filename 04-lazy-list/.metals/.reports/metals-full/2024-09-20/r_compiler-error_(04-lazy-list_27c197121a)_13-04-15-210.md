@@ -1,6 +1,18 @@
+file://<WORKSPACE>/Exercises.scala
+### scala.MatchError: TypeDef(B,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 2635
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-//handin by nicolai seloy (nsel)
 
 package adpro.lazyList
 
@@ -68,66 +80,55 @@ enum LazyList[+A]:
   def toList: List[A] = this match
     case Empty => Nil
     case Cons(h, t) => h() :: t().toList
-
-  def toList1: List[A] = foldRight(Nil)(_::_) 
-   
+  
   // Test in the REPL, for instance: LazyList(1,2,3).toList 
   // (and see what list is constructed)
 
-  // Exercise 
+  // Exercise 3
 
-  def take(n: Int): LazyList[A] = (n,this) match
-    case (1, Cons(h,_)) => cons(h(), empty)
-    case (n, Cons(h,t)) => cons(h(),t().take(n-1))
-    case (_, Empty) => empty
-    
-  def drop1(n: Int): LazyList[A] = this match
-    case Empty => Empty
-    case Cons(h, t) if n > 0 => t().drop(n-1)
-    case adpro.lazyList.LazyList.Cons(_, _) => ??? // unreachable
+  def take(n: Int): LazyList[A] = n,t@@ match
   
-  def drop(n: Int): LazyList[A] = this match
-    case Cons(h, t) if n > 0 => t().drop(n-1)
-    case _ => this
-    
+  
+
+  def drop(n: Int): LazyList[A] = 
+    ???
+
   // Exercise 4
 
-  def takeWhile(p: A => Boolean): LazyList[A] = this match
-    case Cons(h, t) if p(h()) => Cons(h,() => t().takeWhile(p)) 
-    case _ => Empty
+  def takeWhile(p: A => Boolean): LazyList[A] = 
+    ???
 
   // Exercise 5
   
-  def forAll(p: A => Boolean): Boolean = this match
-    case Cons(h,t) => p(h()) && t().forAll(p)
-    case Empty => true
-
+  def forAll(p: A => Boolean): Boolean =
+    ???
+ 
   // Note 1. lazy; tail is never forced if satisfying element found this is
   // because || is non-strict
   // Note 2. this is also tail recursive (because of the special semantics
   // of ||)
   def exists(p: A => Boolean): Boolean = 
-     !forAll(a => !p(a))
+    ???
 
   // Exercise 6
   
   def takeWhile1(p: A => Boolean): LazyList[A] =
-    foldRight(empty)((a, acc) => if p(a) then cons(a, acc) else empty)
+    ???
 
   // Exercise 7
   
   def headOption1: Option[A] = 
-    foldRight(None)((a,_) => Some(a))
+    ???
 
   // Exercise 8
   
   // Note: The type is incorrect, you need to fix it
-  def map[B](f: A => B): LazyList[B] = 
-    foldRight(empty)((a,acc) => cons(f(a), acc))
+  def map(f: Any): LazyList[Int] = 
+    ???
 
   // Note: The type is incorrect, you need to fix it
-  def filter(p: A => Boolean): LazyList[A] = 
-    foldRight(empty)((a,acc) => if p(a) then cons(a,acc)else acc)
+  def filter(p: Any): LazyList[Any] = 
+    ???
 
   /* Note: The type is given correctly for append, because it is more complex.
    * Try to understand the type. The contsraint 'B >: A' requires that B is a
@@ -142,52 +143,32 @@ enum LazyList[+A]:
    * getOrElse last week, and the type of foldRight this week.
    */
   def append[B >: A](that: => LazyList[B]): LazyList[B] = 
-    foldRight(that)((a,acc) => cons(a,acc))
+    ???
 
   // Note: The type is incorrect, you need to fix it
-  def flatMap[B](f: A => LazyList[B]): LazyList[B] = 
-    foldRight(empty)((a,acc) => f(a).append(acc))
+  def flatMap(f: Any): LazyList[Any] = 
+    ???
 
   // Exercise 9
   // Type answer here
-  // def find(p: A => Boolean): Option[A]= this.filter(p).headOption
-  // because if we did it on a non lazy list we would have to calculate the
-  // filter for every element, even though we just want to check the head of our list
   //
+  // ...
   //
   // Scroll down to Exercise 10 in the companion object below
 
   // Exercise 13
 
-  def mapUnfold[B](f: A => B): LazyList[B] = {
-    unfold(this) {
-      case Cons(h,t) => Some((f(h()), t()))
-      case _ => None
-    }
-  }
+  def mapUnfold[B](f: A => B): LazyList[B] =
+    ???
 
-  def takeUnfold(n: Int): LazyList[A] = {
-    unfold(this,n){
-      case (Cons(h,t), 1) => Some((h(), (empty,0)))
-      case (Cons(h,t), n) => Some((h(), (t(),n-1)))
-      case _ => None
-    }
-  }
-    
+  def takeUnfold(n: Int): LazyList[A] =
+    ???
 
-  def takeWhileUnfold(p: A => Boolean): LazyList[A] = {
-    unfold(this){
-      case Cons(h, t) if p(h()) => Some((h(), t()))
-      case _ => None
-    }
-  }
+  def takeWhileUnfold(p: A => Boolean): LazyList[A] =
+    ???
 
-  def zipWith[B >: A, C](ope: (=> B, => B) => C)(bs: LazyList[B]): LazyList[C] = {
-    unfold(this, bs){
-      case (Cons(h, t), Cons(h1,t1)) => Some((ope(h(), h1()), (t(), t1())))
-      case _ => None
-    }
-  }
+  def zipWith[B >: A, C](ope: (=> B, => B) => C)(bs: LazyList[B]): LazyList[C] =
+    ???
 
 end LazyList // enum ADT
 
@@ -225,28 +206,38 @@ object LazyList:
   // Exercise 10
 
   // Note: The type is incorrect, you need to fix it
-  lazy val fibs: LazyList[Int] = 
-    def acc(a: Int, b: Int): LazyList[Int] = 
-      cons(a, acc(b, (a+b)))
-    acc(0, 1)
-
+  lazy val fibs: Any = 
+    ???
 
   // Exercise 11
 
-  def unfold[A,S](z: S)(f: S => Option[(A, S)]): LazyList[A] = f(z) match
-    case None => empty
-    case Some((a,s)) => cons(a, unfold(s)(f))
-  
-  
-    
+  def unfold[A,S](z: S)(f: S => Option[(A, S)]): LazyList[A] =
+    ???
 
   // Exercise 12
 
   // Note: The type is incorrect, you need to fix it
-  lazy val fibsUnfold: LazyList[Int] = LazyList.unfold((0,1)){
-    elem => Some((elem._1, (elem._2 , elem._1 + elem._2)))
-  } 
+  lazy val fibsUnfold: Any = ???
 
   // Scroll up for Exercise 13 to the enum
 
 end LazyList // companion object
+
+```
+
+
+
+#### Error stacktrace:
+
+```
+dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents$$anonfun$2(KeywordsCompletions.scala:218)
+	scala.Option.map(Option.scala:242)
+	dotty.tools.pc.completions.KeywordsCompletions$.checkTemplateForNewParents(KeywordsCompletions.scala:219)
+	dotty.tools.pc.completions.KeywordsCompletions$.contribute(KeywordsCompletions.scala:44)
+	dotty.tools.pc.completions.Completions.completions(Completions.scala:114)
+	dotty.tools.pc.completions.CompletionProvider.completions(CompletionProvider.scala:90)
+	dotty.tools.pc.ScalaPresentationCompiler.complete$$anonfun$1(ScalaPresentationCompiler.scala:146)
+```
+#### Short summary: 
+
+scala.MatchError: TypeDef(B,TypeBoundsTree(EmptyTree,EmptyTree,EmptyTree)) (of class dotty.tools.dotc.ast.Trees$TypeDef)

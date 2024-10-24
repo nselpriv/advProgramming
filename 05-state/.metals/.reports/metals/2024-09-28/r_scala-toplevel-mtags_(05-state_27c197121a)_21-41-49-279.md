@@ -1,13 +1,10 @@
-// Advanced Programming, A. Wąsowski, IT University of Copenhagen
+error id: file://<WORKSPACE>/Exercises.scala:[4436..4439) in Input.VirtualFile("file://<WORKSPACE>/Exercises.scala", "// Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-//handin by nicolai seloy nsel 
 
 package adpro.state
 
 import adpro.lazyList.LazyList
 import adpro.lazyList.LazyList.*
-import adpro.state.RNG.map2
-import adpro.state.RNG.SimpleRNG
 
 
 trait RNG:
@@ -164,39 +161,19 @@ case class State[S, +A](run: S => (A, S)):
 
   // Exercise 9 (methods in class State)
   // Search for the second part (sequence) below
-  def unit[A ,S](a:A): State[S,A] = 
-    State(s => (a,s)) //is this not the same as the unit type below?? 
+  def 
 
   def flatMap[B](f: A => State[S, B]): State[S, B] = 
-    State { s => 
-      val (a, s1) = run(s)
-      f(a).run(s1)
+    State {s => 
+        val (a, s1) = run(s)
+        f(a).run(s1)
     }
 
   def map[B](f: A => B): State[S, B] = 
-    State {s => 
-    val (a,s1) = run(s)
-    (f(a), s1)
-    }
-
-    //def map[A,B](s: Rand[A])(f: A => B): Rand[B] =
-    //rng => {
-    //  val (a, rng2) = s(rng)
-    //  (f(a), rng2)
-    //}
+    ???
 
   def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] = 
-    State {s =>
-      val (a, s1) = run(s)
-      val (b, s2) = sb.run(s1)
-      (f(a,b),s2)}
-
-  //def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = 
-  //  rng => {
-  //    val (a, rng1) = ra (rng)
-  //    val (b, rng2) = rb (rng1)
-  //    (f(a,b),rng2)
-  //  }
+    ???
 
 
 object State:
@@ -220,30 +197,29 @@ object State:
   // Exercise 9 (sequence, continued)
  
   def sequence[S,A](sas: List[State[S, A]]): State[S, List[A]] =
-    sas.foldRight[State[S, List[A]]](unit(Nil))((sa,acc) => sa.map2(acc)(_::_))
-
-  //def sequence[A](ras: List[Rand[A]]): Rand[List[A]] =
-  //    ras.foldRight[Rand[List[A]]](unit(Nil))(map2(_,_)(_::_))
+    ???
 
   import adpro.lazyList.LazyList
 
   // Exercise 10 (stateToLazyList)
   
-  def stateToLazyList[S, A](s: State[S,A])(initial: S): LazyList[A] = {
-    val(a, s1) = s.run(initial)
-    LazyList.cons(a,stateToLazyList(s)(s1))
-  }
-
+  def stateToLazyList[S, A](s: State[S,A])(initial: S): LazyList[A] =
+    ???
 
   // Exercise 11 (lazyInts out of stateToLazyList)
   
-  def lazyInts(rng: RNG): LazyList[Int] = {
-    val nextInt = State[RNG,Int](_.nextInt)
-    stateToLazyList(nextInt)(rng)
-  }
+  def lazyInts(rng: RNG): LazyList[Int] = 
+    ???
 
   lazy val tenStrictInts: List[Int] = 
-    val rng = SimpleRNG(1)
-    lazyInts(rng).take(10).toList
+    ???
 
 end State
+")
+file://<WORKSPACE>/Exercises.scala
+file://<WORKSPACE>/Exercises.scala:166: error: expected identifier; obtained def
+  def flatMap[B](f: A => State[S, B]): State[S, B] = 
+  ^
+#### Short summary: 
+
+expected identifier; obtained def

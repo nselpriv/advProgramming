@@ -1,6 +1,18 @@
+file://<WORKSPACE>/Exercises.scala
+### java.lang.StringIndexOutOfBoundsException: begin 5514, end 5522, length 5519
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 5516
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-// Handin by nsel 
 
 package adpro.lazyList
 
@@ -138,6 +150,7 @@ object LazyListSpec
  
   // Exercise 10
 
+
   property("ex10.01 l.append(m).head = l.head") =
     given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
     forAll {(l:LazyList[Int], m:LazyList[Int]) => l.append(m).headOption == l.headOption}
@@ -157,8 +170,24 @@ object LazyListSpec
     }
 
   property("ex10.05 (l.append(m)).append(n) == l.append(m.append(n))") =
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll{(l:LazyList[Int], m:LazyList[Int], n:LazyList[Int]) => 
-      l.append(m).append(n).toList == l.append((m.append(n))).toList
-    }
+    given Ar@@
   
+```
+
+
+
+#### Error stacktrace:
+
+```
+java.base/java.lang.String.checkBoundsBeginEnd(String.java:4601)
+	java.base/java.lang.String.substring(String.java:2704)
+	dotty.tools.pc.PcCollector.isGeneratedGiven(PcCollector.scala:133)
+	dotty.tools.pc.PcCollector.soughtSymbols(PcCollector.scala:209)
+	dotty.tools.pc.PcCollector.resultWithSought(PcCollector.scala:345)
+	dotty.tools.pc.PcCollector.result(PcCollector.scala:335)
+	dotty.tools.pc.PcDocumentHighlightProvider.highlights(PcDocumentHighlightProvider.scala:33)
+	dotty.tools.pc.ScalaPresentationCompiler.documentHighlight$$anonfun$1(ScalaPresentationCompiler.scala:178)
+```
+#### Short summary: 
+
+java.lang.StringIndexOutOfBoundsException: begin 5514, end 5522, length 5519

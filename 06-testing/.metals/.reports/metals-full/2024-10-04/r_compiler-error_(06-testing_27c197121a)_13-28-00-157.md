@@ -1,6 +1,18 @@
+file://<WORKSPACE>/Exercises.scala
+### java.lang.AssertionError: assertion failed: MethodType(List(f, p, s1, pp1), List(TypeRef(ThisType(TypeRef(NoPrefix,module class scala)),trait Function1), TypeRef(ThisType(TypeRef(NoPrefix,module class scala)),trait Function1), TypeRef(ThisType(TypeRef(NoPrefix,module class scalacheck)),class Shrink), TypeRef(ThisType(TypeRef(NoPrefix,module class scala)),trait Function1)), TypeRef(ThisType(TypeRef(NoPrefix,module class scalacheck)),class Prop))
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+
+
+action parameters:
+offset: 3568
+uri: file://<WORKSPACE>/Exercises.scala
+text:
+```scala
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-// Handin by nsel 
 
 package adpro.lazyList
 
@@ -58,7 +70,7 @@ object LazyListSpec
   // Exercise 2
 
   val failList : LazyList[Unit] = cons((), ???)
-  property("Ex02: Headoption does not force the tail of a lazy list") = 
+  property("Ex02: name") = 
     failList.headOption;
     true
   
@@ -68,7 +80,7 @@ object LazyListSpec
     if n <= 0 then Empty
     else Cons(() => ???, () => failListN(n-1))
 
-  property("Ex03: take does not force any heads nor nay tails of the lazy list it manipulates") = 
+  property("Ex03: something") = 
     forAll(Gen.choose(0,42)) {(length:Int) =>
       forAll(Gen.choose(0,length)) {(n:Int) =>
         failListN(length).take(n);
@@ -109,56 +121,57 @@ object LazyListSpec
     given Arbitrary[Int] = Arbitrary(Gen.choose(0,100))
 
     forAll{ (s: LazyList[Int]) =>
-        forAll{(n:Int,a:Int) => s.drop(n).drop(a).toList== s.drop(n+a).toList  
+      forAll{(a: Int)} => 
+        forAll{(n:Int) => s.drop(n).take(a).toList== s.take(n@@).toList  
+        }
       }
     }
 
+  
   // Exercise 7
 
-  def faillingListTail(n:Int) : LazyList[Int] = n match
-    case 0 => Cons(() => 0, () => Empty)
-    case _ => Cons(() => ???, () => faillingListTail(n-1))
-  
-  property("Ex07.01:drop(n) does not force any of first n elements") =
-    given Arbitrary[Int] = Arbitrary(Gen.choose(0,100))
-    forAll{(n:Int) => faillingListTail(n).drop(n).toList; true}
-
-
   // Exercise 8
-  property("ex08") = 
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll{(l:LazyList[Int]) => l.map(identity).toList == l.toList}
 
   // Exercise 9
-  property("ex09") = 
-    given Arbitrary[Int] = Arbitrary(Gen.choose(0,100))
-    given Arbitrary[LazyList[Int]] = Arbitrary(infiniteLazyList[Int])
-
-    forAll{(l: LazyList[Int]) => l.map(identity); true}
  
   // Exercise 10
 
-  property("ex10.01 l.append(m).head = l.head") =
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll {(l:LazyList[Int], m:LazyList[Int]) => l.append(m).headOption == l.headOption}
 
-  property("ex10.02 l.append(Empty) == l") = 
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll {(l:LazyList[Int]) => l.append(Empty).toList == l.toList}
+```
 
-  property("ex10.03 l.append(m).size = l.size+m.size ") =
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll{(l:LazyList[Int], m:LazyList[Int]) => l.append(m).toList.size == l.toList.size + m.toList.size}
 
-  property("ex10.04 l.append(m.reverse) == m.append(l).reverse") = 
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll{(l:LazyList[Int], m:LazyList[Int]) =>
-      l.append(list2lazyList(m.toList.reverse)).toList == m.append(list2lazyList(l.toList.reverse)).toList.reverse
-    }
 
-  property("ex10.05 (l.append(m)).append(n) == l.append(m.append(n))") =
-    given Arbitrary[LazyList[Int]] = Arbitrary(genNonEmptyLazyList[Int])
-    forAll{(l:LazyList[Int], m:LazyList[Int], n:LazyList[Int]) => 
-      l.append(m).append(n).toList == l.append((m.append(n))).toList
-    }
-  
+#### Error stacktrace:
+
+```
+scala.runtime.Scala3RunTime$.assertFailed(Scala3RunTime.scala:8)
+	dotty.tools.dotc.core.TypeErasure.dotty$tools$dotc$core$TypeErasure$$sigName(TypeErasure.scala:950)
+	dotty.tools.dotc.core.TypeErasure.dotty$tools$dotc$core$TypeErasure$$sigName(TypeErasure.scala:951)
+	dotty.tools.dotc.core.TypeErasure$.sigName(TypeErasure.scala:234)
+	dotty.tools.dotc.core.Signature.$anonfun$2(Signature.scala:111)
+	scala.collection.immutable.List.map(List.scala:246)
+	dotty.tools.dotc.core.Signature.prependTermParams(Signature.scala:111)
+	dotty.tools.dotc.core.Types$MethodOrPoly.computeSignature$2(Types.scala:3890)
+	dotty.tools.dotc.core.Types$MethodOrPoly.signature(Types.scala:3907)
+	dotty.tools.dotc.core.Denotations$SingleDenotation.signature(Denotations.scala:623)
+	dotty.tools.dotc.core.Denotations$SingleDenotation.signature(Denotations.scala:613)
+	dotty.tools.dotc.core.Symbols$Symbol.signature(Symbols.scala:208)
+	dotty.tools.pc.SemanticdbSymbols$.addOverloadIdx$1(SemanticdbSymbols.scala:154)
+	dotty.tools.pc.SemanticdbSymbols$.addDescriptor$1(SemanticdbSymbols.scala:175)
+	dotty.tools.pc.SemanticdbSymbols$.addSymName(SemanticdbSymbols.scala:179)
+	dotty.tools.pc.SemanticdbSymbols$.addOwner$1(SemanticdbSymbols.scala:134)
+	dotty.tools.pc.SemanticdbSymbols$.addSymName(SemanticdbSymbols.scala:178)
+	dotty.tools.pc.SemanticdbSymbols$.addOwner$1(SemanticdbSymbols.scala:134)
+	dotty.tools.pc.SemanticdbSymbols$.addSymName(SemanticdbSymbols.scala:178)
+	dotty.tools.pc.SemanticdbSymbols$.symbolName(SemanticdbSymbols.scala:117)
+	dotty.tools.pc.completions.Completions.visit$3(Completions.scala:588)
+	dotty.tools.pc.completions.Completions.filterInteresting$$anonfun$1(Completions.scala:614)
+	scala.collection.immutable.List.foreach(List.scala:333)
+	dotty.tools.pc.completions.Completions.filterInteresting(Completions.scala:614)
+	dotty.tools.pc.completions.Completions.completions(Completions.scala:133)
+	dotty.tools.pc.completions.CompletionProvider.completions(CompletionProvider.scala:90)
+	dotty.tools.pc.ScalaPresentationCompiler.complete$$anonfun$1(ScalaPresentationCompiler.scala:146)
+```
+#### Short summary: 
+
+java.lang.AssertionError: assertion failed: MethodType(List(f, p, s1, pp1), List(TypeRef(ThisType(TypeRef(NoPrefix,module class scala)),trait Function1), TypeRef(ThisType(TypeRef(NoPrefix,module class scala)),trait Function1), TypeRef(ThisType(TypeRef(NoPrefix,module class scalacheck)),class Shrink), TypeRef(ThisType(TypeRef(NoPrefix,module class scala)),trait Function1)), TypeRef(ThisType(TypeRef(NoPrefix,module class scalacheck)),class Prop))
