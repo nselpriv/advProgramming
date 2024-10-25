@@ -29,7 +29,7 @@ project/plugins/project/
 .ensime
 
 .DS_Store
-
 # scala-cli specific
 .bsp
 .scala-build
+07-prop/.metals/*
