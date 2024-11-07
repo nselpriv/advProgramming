@@ -237,7 +237,14 @@ end Foldable
 
 // Exercise 11
 
-given foldableList[A]: Foldable[List] = ???
+given foldableList[A]: Foldable[List] with
+      extension [A](as: List[A])
+        override def foldMap[B](f: A => B)(using mb: Monoid[B]): B =
+          as.map(f).foldLeft(mb.empty)(mb.combine)
+        override def foldRight[B](acc: B)(f: (A,B) => B) = 
+          as.foldRight(acc)(f)
+        override def foldLeft[B](acc:B)(f:(B,A)=>B) =
+          as.foldLeft(acc)(f)
 
  
 // Exercise 12
@@ -248,7 +255,7 @@ given foldableList[A]: Foldable[List] = ???
 extension [F[_]: Foldable, A] (as: F[A])
   def toList: List[A] = as.toListF
   def toListF: List[A] =
-    ???
+    as.foldRight(List.empty[A])(_::_)
 
 
 
@@ -283,7 +290,12 @@ end Functor
 
 // Exercise 13
 
-lazy val optionFunctor: Functor[Option] = ???
+lazy val optionFunctor: Functor[Option] = new Functor[Option] {
+  extension [A](fa: Option[A])
+    def map[B](f: A => B): Option[B] = fa match
+      case Some(value) => Some(f(value))
+      case _ => None
+}
 
 
 // this instance is provided
@@ -300,7 +312,7 @@ object FunctorEx14Spec
   // Exercise 14
 
   property("Ex14.02: optionFunctor satisfies map law (tests Exercise 13)") =
-    ???
+    optionFunctor.functorLaws.map[Int]
 
 end FunctorEx14Spec
 
@@ -363,10 +375,15 @@ end Monad
 
 // Exercise 15
 
-lazy val optionMonad: Monad[Option] = ???
+lazy val optionMonad: Monad[Option] = new Monad[Option]:
+  def unit[A](a: => A): Option[A] = Some(a)
+  extension [A](fa: Option[A]) override def flatMap[B](f: A => Option[B]): Option[B] = fa.flatMap(f)
 
-lazy val listMonad: Monad[List] = ???
+lazy val listMonad: Monad[List] = new Monad[List]:
+  def unit[A](a: => A): List[A] = List(a)
 
+  extension [A](fa: List[A])
+    def flatMap[B](f: A => List[B]): List[B] = fa.flatMap(f)
 
 // Exercise 16 (tests for Exercise 15, written by the student)
 
@@ -374,10 +391,12 @@ object FunctorEx16Spec
   extends org.scalacheck.Properties("exer16"):
 
   property("Ex16.01: optionMonad is a monad") =
-    ???
+    given Arbitrary[Int] = Arbitrary.arbInt
+    optionMonad.monadLaws.monad[Int,Int,Int]
 
   property("Ex16.02: listMonad is a monad") =
-    ???
+    given Arbitrary[Int] = Arbitrary.arbInt
+    listMonad.monadLaws.monad[Int, Int, Int]
 
 end FunctorEx16Spec
 
@@ -387,24 +406,26 @@ end FunctorEx16Spec
 // We do this as an extension to maintain the linear sequence of exercises in
 // the file (we would normally place it in the Monad trait).
 
+//solution from discord, this was really hard
 extension [F[_]](m: Monad[F]) 
   def sequence[A](fas: List[F[A]]): F[List[A]] = 
-    ???
+    fas.foldRight(m.unit(Nil))((elem, acc) => m.map2(elem)(acc){_::_})
 
 
 // Exercise 18
 
 extension [F[_]](m: Monad[F]) 
   def replicateM[A](n: Int, ma: F[A]): F[List[A]] =
-    ???
+    m.sequence(List.fill(n)(ma))
 
 // Write in the answer below ...
 //
-// ???
+// I guess since we're using it as an extension method and everything is kept generic replicate 
+// should just make a sequence of length n of whatever we choose, but the value will be there n times and then wrapped in some 
 
 
 // Exercise 19
 
 extension [F[_]](m: Monad[F]) 
   def compose[A, B, C](f: A => F[B], g: B => F[C]): A => F[C] =
-    ???
+    a => m.flatMap(f(a))(g)

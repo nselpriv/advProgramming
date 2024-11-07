@@ -33,3 +33,4 @@ project/plugins/project/
 .bsp
 .scala-build
 07-prop/.metals/*
+*/.metals/*
