@@ -69,7 +69,9 @@ enum Ball:
   case Red, Black
 import Ball.*
 
-def pick (n: Int): Dist[Ball] = ???
+def pick (n: Int): Dist[Ball] = 
+  Pigaro.bernoulli("Picked")(1.0/(n+1), Red, Black)
+
 
 //  Exercise 2. 
 //
@@ -88,7 +90,10 @@ def pick (n: Int): Dist[Ball] = ???
 
 
 def move(player: Player, n: Int): Dist[Player] = 
-  ???
+  pick(n).flatMap("Winner")(ball => ball match
+    case Red => Dirac(player)
+    case Black => move(next(player), n-1)
+  )
 
 // Exercise 3.
 //
@@ -108,12 +113,20 @@ def move(player: Player, n: Int): Dist[Player] =
 // IData[A].pr(value: A): Double
 
 // Probability that Paula wins given Paula starts (the total no of balls: BallsNo)
+
+def N = 100
+
 def probPaulaStarts: Double = 
-  ???
+  move(Paula, BallsNo - 1)
+  .sample(N)
+  .pr(Paula)
+
 
 // Probability that Paula wins given Peter starts (the total no of balls: BallsNo)
 def probPeterStarts: Double = 
-  ???
+  move(Peter, BallsNo -1)
+  .sample(N)
+  .pr(Paula)
 
 //  Which strategy is beter for Paula? What if BallsNo == 9? 
 //  Write your answer here in a comment: ___
@@ -145,7 +158,7 @@ def probPeterStarts: Double =
 // We first create a uniform prior for the first mover:
 
 lazy val firstMover: Dist[Player] =
-  ???
+  Pigaro.uniform(Paula, Peter)
 
 // Now create a nullary function 'gameResult' that picks the first mover
 // randomly using 'firstMover' and then returns the probability distribution
@@ -158,7 +171,7 @@ lazy val firstMover: Dist[Player] =
 // prove useful. 
 
 def gameResult: Dist[(Player, Player)] = 
-  ???
+  firstMover.probDep(player => move(player, BallsNo - 1))
 
 // What is the probability that Paula wins with this uniform prior? Does it
 // agree with your intuition? Write the answer in a comment:
@@ -167,15 +180,14 @@ def gameResult: Dist[(Player, Player)] =
 // Now we are going to make the observation that Paula wins. 
 
 lazy val gameWonByPaula: Dist[(Player, Player)] = 
-  gameResult.matching { case (_,Paula) => }
+  gameResult.matching { case (_,Paula) =>  }
 
 // Calculate the probability that Paula started given that she won.
 // You will need to sample and use IData's .pr or .prMatching
 // methods.
 
 lazy val probPaulaStarted: Double = 
-  ???
-
+  gameWonByPaula.sample(N).prMatching({ case (Paula, _) => })
 // Does this probability depend on the number of balls in the urn in the
 // urn being even or odd? What if it is even? What if it is odd?
 //
@@ -211,8 +223,9 @@ val UpperBound = 6
 
 // Pigaro.uniform[A](name: String)(a : A*) :Element[A]
 
-lazy val blackBallsNo: Dist[Int] =
-  ???
+lazy val blackBallsNo: Dist[Int] = Pigaro.
+uniform("Balls")((0 to UpperBound - 1)*)
+
 
 // Now convert the prior distribution on the initial number of black balls in
 // the urn, into a distribution over the winning player.  Since the game is
@@ -222,12 +235,12 @@ lazy val blackBallsNo: Dist[Int] =
 // There is no test for this step of the computation.
 
 def outcome: Dist[(Int, Player)] = 
-  ???
+  blackBallsNo.probDep( noBalls => move(Paula,noBalls))
 
 // The following asserts that Paula has won.
 
 lazy val paulaWon: Dist[(Int, Player)] = 
-  ???
+ outcome.matching{ case (_,Paula) => }
 
 // Now define the posterior probabilities for all size of the urn from 1 to
 // UpperBound. You can do this using IData.pr.
@@ -238,7 +251,7 @@ lazy val paulaWon: Dist[(Int, Player)] =
 // IData[T].prMatching  { case ... => }
 
 lazy val posteriorOdd: Double =
-  ???
+  blackBallsNo.sample(N).prMatching { case i if i % 2 == 0 =>}
 
 // Is the posteriorOdd greater than 1/2? Why?
 //

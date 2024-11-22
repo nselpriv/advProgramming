@@ -34,3 +34,5 @@ project/plugins/project/
 .scala-build
 07-prop/.metals/*
 */.metals/*
+*/.vscode/*
+14-old-exams/2023/.metals/*
