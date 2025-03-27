@@ -138,18 +138,19 @@ object ExceptionEvaluator:
   import M.*
 
   def eval(term: Term): M[Int] = term match
-    case Cons(value) =>  Return(value)
+    case Cons(value) => Return(value)
     case Div(left, right) => eval(left) match
       case Raise(e) => Raise(e)
-      case Return(lValue) => 
-        eval(right) match
-          case Raise(e) => Raise(e)
-          case Return(rValue) => 
-            if rValue == 0 then 
-              Raise("Division by zero")
-            else
-              Return(lValue / rValue) 
+      case Return(a1) => eval(right) match
+        case Raise(e) => Raise(e)
+        case Return(a2) => 
+            if a2 == 0 then
+              Raise("Divison by zero")
+            else 
+              Return(a1/a2)
+      
     
+  
 
   // Exercise 2
   //
@@ -158,17 +159,16 @@ object ExceptionEvaluator:
   // monad laws.  If you lack intuition, notice that M is essentially Option or
   // Either, with Return being Some.
 
-  given mIsMonad: Monad[M] with
+  given mIsMonad: Monad[M] = new Monad[M] {
+
     def unit[A](a: => A): M[A] = M.Return(a)
 
-    extension [A](fa: M[A])
-      override def flatMap[B](f: A => M[B]): M[B] = fa match
-        case M.Raise(e) => M.Raise(e) // Propagate the exception
-        case M.Return(a) => f(a)      // Apply the function to the value
-        
-      override def map[B](f: A => B): M[B] = fa match
-        case M.Raise(e) => M.Raise(e) // Propagate the exception
-        case M.Return(a) => M.Return(f(a)) // Apply the function to the value
+      extension [A](fa: M[A]) override def flatMap[B](f: A => M[B]): M[B] = fa match
+        case Raise(e) => M.Raise(e)
+        case Return(a) => f(a)
+    
+      
+  }
 
   // Exercise 3
   //
@@ -180,17 +180,14 @@ object ExceptionEvaluator:
   // Think: Why is flatMap suddendly available, and it was not in Exercise 1?
 
   def evalMonad(term: Term): M[Int] = term match
-    case Cons(value) => mIsMonad.unit(value)
-      mIsMonad.unit(value) // Explicitly access unit from the given instance
-
-    case Div(left, right) =>
-      evalMonad(left).flatMap { lValue => // Evaluate left term
-        evalMonad(right).flatMap { rValue => // Evaluate right term
-          if rValue == 0 then
-            M.Raise("Division by zero") // Raise an exception
+    case Cons(value) => summon[Monad[M]].unit(value)
+    case Div(left, right) => 
+      evalMonad(left).flatMap{a => 
+        evalMonad(right).flatMap{b => 
+          if b == 0 then 
+            M.Raise("division by zero")
           else
-            mIsMonad.unit(lValue / rValue) // Explicitly use unit
-        }
+            summon[Monad[M]].unit(a/b)}
       }
   
 
@@ -204,16 +201,16 @@ object ExceptionEvaluator:
   // https://www.scala-lang.org/api/3.x/scala/collection/WithFilter.html#withFilter-fffffb75
   // The exercise can be completed without withFilter, just 1-2 lines longer
 
-  def evalForYield(term: Term): M[Int] = term match
-    case Cons(value) => M.Return(value)
+  def evalForYield(term: Term)(using m: Monad[M]): M[Int] = term match
+    case Cons(value) => m.unit(value)
     case Div(left, right) => 
       for {
-        lValue <- evalForYield(left)
-        rValue <- evalForYield(right)
-        result <- if rValue == 0 then
-            M.Raise("Division by zero")
-          else 
-            M.Return(lValue / rValue)
+        a <- evalForYield(left)
+        b <- evalForYield(right)
+        result <- if b == 0 then 
+            M.Raise("division by zero")
+          else m.unit(a/b)
+
       } yield result
   
 
@@ -245,19 +242,18 @@ object StateEvaluator:
 
   def eval (term: Term): M[Int] = term match
     case Cons(value) => 
-        M(state => (value, state))
-    case Div(left, right) =>
-      M { state =>
-        // Evaluate the left and right terms
-        val (lValue, stateAfterLeft) = eval(left).step(state)
-        val (rValue, stateAfterRight) = eval(right).step(stateAfterLeft)
-
-        // Update the state by incrementing it (to simulate tracking operations)
-        if rValue == 0 then
-           throw new RuntimeException("Division by zero") // Explicitly raise exception
+      M(s => (value,s))
+    case Div(left, right) => 
+      M(s =>  
+        val (a, sa) = eval(left).step(s)
+        val (b, sb) = eval(right).step(sa)
+        if  b == 0 
+        then
+          throw new RuntimeException("oh no")
         else
-          (lValue / rValue, stateAfterRight + 1) // Perform division, increment state
-      }
+          (a / b, sb +1)
+      )
+
   
 
   // Exercise 6
@@ -269,23 +265,16 @@ object StateEvaluator:
   // Note that we could implement the counter incrementation in flatMap, but
   // this then would count not only divisions, so let's not do that.
 
-  given mIsMonad: Monad[M] with
-    // unit (also called "return" in some contexts)
-    def unit[A](a: => A): M[A] =
-      M(state => (a, state))  // Simply return the value along with the unchanged state
+  given mIsMonad: Monad[M] = new Monad[M] {
 
-    // flatMap
-    extension [A](fa: M[A])
-      override def flatMap[B](f: A => M[B]): M[B] =
-        M { state =>
-          val (a, newState) = fa.step(state)  // Evaluate the current state
-          f(a).step(newState)  // Apply the function f to the value and return the new state
-        }
+    override def unit[A](a: => A): M[A] = M(state => (a, state))
 
-    // map
-    extension [A](fa: M[A])
-      override def map[B](f: A => B): M[B] =
-        fa.flatMap(a => unit(f(a)))  // Use flatMap to apply the function to the value
+    extension [A](fa: M[A]) override def flatMap[B](f: A => M[B]): M[B] = 
+      M (state => 
+        val (a, newState) = fa.step(state)
+        f(a).step(newState)
+      )
+  }
 
   // Exercise 7
   //
@@ -293,39 +282,37 @@ object StateEvaluator:
 
   def tick: M[Unit] = M { (x: State) => ((), x+1) }
 
-  def evalMonad(term: Term): M[Int] = term match
+  def evalMonad (term: Term): M[Int] = term match
     case Cons(value) =>
-      M(state => (value, state))  // Wrap the constant value with the current state
+      M(state => (value, state))  
 
     case Div(left, right) =>
-      evalMonad(left).flatMap { lValue =>       // Evaluate the left term
-        evalMonad(right).flatMap { rValue =>   // Evaluate the right term
+      evalMonad(left).flatMap { lValue =>       
+        evalMonad(right).flatMap { rValue =>   
           if rValue == 0 then
-            M(state => throw new RuntimeException("Division by zero"))  // Raise exception for division by zero
+            M(state => throw new RuntimeException("Division by zero"))  
           else
-            tick.flatMap(_ => M(state => (lValue / rValue, state)))  // Increment state and return the division result
+            tick.flatMap(_ => M(state => (lValue / rValue, state))) 
         }
       }
-
+  
 
   // Exercise 8
   //
   // Reimplement the above using for-yield
 
-  def evalForYield(term: Term): M[Int] = term match
-    case Cons(value) =>
-      M(state => (value, state))  // Wrap the constant value with the current state
-
-    case Div(left, right) =>
-      for
-        lValue <- evalForYield(left)   // Evaluate the left term
-        rValue <- evalForYield(right)  // Evaluate the right term
-        _ <- 
-            if rValue == 0 then
-               M(state => throw new RuntimeException("Division by zero")) // Raise exception for division by zero
-            else
-               tick // Otherwise, increment the state (count the division)
-      yield lValue / rValue  // Return the result of the division
+  def evalForYield (term: Term)(using m: Monad[M]): M[Int] = term match
+    case Cons(value) => 
+      m.unit(value)
+    case Div(left, right) => 
+      for 
+        a <- evalForYield(left)
+        b <- evalForYield(right)
+        _ <- if b == 0 then
+            M(state => throw new RuntimeException("oh no"))
+             else 
+            tick
+      yield a / b
 
 end StateEvaluator
 
@@ -348,17 +335,15 @@ object OutputEvaluator:
   // paper, Section 2.4.  Again don't worry about divisions by zero or
   // counting divisions, we only produce the trace in this exercise.
 
-  // Exercise 9: Implementing the evaluator to produce output (trace)
-  def eval(term: Term): M[Int] = term match
-    case Cons(value) =>
-      M(line(term)(value), value)  // Return the value and the trace for the constant term
-
+  def eval (term: Term): M[Int] = term match
+    case Cons(value) => M(line(term)(value), value)
     case Div(left, right) =>
-      val leftEval = eval(left)   // Evaluate the left term
-      val rightEval = eval(right) // Evaluate the right term
-      val result = leftEval.a / rightEval.a  // Perform the division
-      val trace = leftEval.o + rightEval.o + line(term)(result)  // Combine traces
-      M(trace, result)  // Return the result along with the trace
+      val leftEval = eval(left)
+      val rightEval = eval(right)
+      val result = leftEval.a / rightEval.a
+      val trace = leftEval.o + rightEval.o + line(term)(result)
+      M(trace, result)
+  
 
   // Exercise 10
   //
@@ -366,17 +351,15 @@ object OutputEvaluator:
   // class is in Monad). The test suite will automatically check whether it
   // satisfies the monad laws.
 
-  given mIsMonad: Monad[M] with
-    def unit[A](a: => A): M[A] = M("", a)  // Wrap the value in the monad with an empty trace
-      
-    extension [A](fa: M[A])
-      override def flatMap[B](f: A => M[B]): M[B] = fa match
-        case M(o, a) => 
-          val M(o2, b) = f(a)  // Apply the function to the value
-          M(o + o2, b)  // Combine the traces from both monadic values
-      
-      override def map[B](f: A => B): M[B] = 
-        fa.flatMap(a => unit(f(a)))  // Use flatMap and unit to apply the function to the value
+  given mIsMonad: Monad[M] = new Monad[M] {
+
+    override def unit[A](a: => A): M[A] = M("", a)
+
+    extension [A](fa: M[A]) override def flatMap[B](f: A => M[B]): M[B] = fa match
+      case M(o, a) => 
+        val M(o2, b) = f(a)
+        M(o + o2,b)
+  }
 
   // Exercise 11
   //
@@ -384,40 +367,45 @@ object OutputEvaluator:
 
   def out (o: Output): M[Unit] = M (o, ())
 
-  def evalMonad(term: Term): M[Int] = term match {
+  def evalMonad (term: Term)(using m:Monad[M]): M[Int] = term match
     case Cons(value) => 
-      M("", value)  // Directly return the constant value
-  
-    case Div(left, right) =>
-      // Evaluate the left and right terms
-      val leftEval = evalMonad(left)
-      val rightEval = evalMonad(right)
-  
-      // Chain the results using flatMap
-      leftEval.flatMap { lValue =>
-        rightEval.flatMap { rValue =>
-          if (rValue == 0) {
-            // Division by zero, throw an exception
-            throw new RuntimeException("Division by zero")
-          } else {
-            // Calculate the result and track the output
+        m.unit(value).flatMap { v =>
+          out(line(term)(v)).flatMap { _ => m.unit(v) }
+        }
+    case Div(left, right) => 
+      evalMonad(left).flatMap { lValue =>
+        evalMonad(right).flatMap { rValue =>
+          if rValue == 0 then
+            throw new RuntimeException("oh no")
+          else
             val result = lValue / rValue
-            val output = line(term)(result)  // Track output for this division
-          
-            // Combine the traces and return the result
-            M(output, result)
-          }
+            out(line(term)(result)).flatMap { _ => m.unit(result) }
         }
       }
-  }
-
-   
+  
 
   // Exercise 12
   //
   // Reimplement the above using for-yield
 
-  def evalForYield (term: Term): M[Int] = ???
+  def evalForYield (term: Term)(using m: Monad[M]): M[Int] = term match 
+    case Cons(value) => 
+      for {
+        v <- m.unit(value)
+        _ <- out(line(term)(v))
+      } yield v
+    case Div(left, right) => 
+      for {
+        lValue <- evalMonad(left)
+        rValue <- evalMonad(right)
+        result <- {
+          if rValue == 0 then
+            throw new RuntimeException("oh no")
+          else
+            val res = lValue / rValue
+            out(line(term)(res)).flatMap { _ => m.unit(res) }
+        }
+      } yield result
 
    // Exercise 13
    //
@@ -428,6 +416,7 @@ object OutputEvaluator:
    //
    // No new writing in this exercise, just refactoring
    // the 4 earlier exercises.
+
 
   
 
