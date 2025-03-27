@@ -1,18 +1,15 @@
 // Advanced Programming, A. Wąsowski, IT University of Copenhagen
 // Based on Functional Programming in Scala, 2nd Edition
-// handin by nsel
 
 package adpro.prop
 
 import adpro.state.*
-import adpro.state.RNG.nonNegativeInt
-import org.scalacheck.Arbitrary
 
 val TODO = 42
 
 // Exercise 1
 
-lazy val rng1: RNG = RNG.Simple(TODO)
+lazy val rng1: RNG = RNG.Simple(42)
 
 // Exercise 2
 
@@ -34,14 +31,16 @@ object Exercise_3:
   // allow the teachers to test them with different mutants of `minimum`.
   
   def p1Min (minimum: List[Int] => Int): org.scalacheck.Prop = 
-    forAllNoShrink(intList){list => 
-      val min = minimum(list)
-      list.forall(_ >= min) == true}
+    org.scalacheck.Prop.forAll(intList){(x => 
+      val min = minimum(x)
+      x.forall(_ >= min) == true
+    )}
 
   def p2Min (minimum: List[Int] => Int): org.scalacheck.Prop = 
-    forAllNoShrink(intList){list => 
-      val min = minimum(list)
-      list.contains(min) == true}
+    org.scalacheck.Prop.forAll(intList){(x => 
+      val min = minimum(x)
+      x.contains(min) == true
+    )}
 
 end Exercise_3
 
@@ -51,23 +50,20 @@ object Exercise_4:
 
   // This implementation of Prop is only used in Exercise 4
   trait Prop:
-    self => 
+    self => // TODO remove
     def check: Boolean
 
-    infix def && (that: Prop): Prop = 
-      new Prop {
+    infix def && (that: Prop): Prop = new Prop {
         def check: Boolean = self.check && that.check
       }
       
+    
 
 end Exercise_4
 
 opaque type Gen[+A] = State[RNG, A]
 
 object Gen:
-
-
-  //State[RNG,A](x)
   
   extension [A](g: Gen[A]) 
     // Let's convert generator to streams of generators
@@ -75,27 +71,21 @@ object Gen:
       LazyList.unfold[A,RNG](rng)(rng => Some(g.run(rng)))
 
   // Exercise 5
-  def choose (start: Int, stopExclusive: Int): Gen[Int] = // RNG => (Int,RNG) gen is really just an alias  
+  def choose (start: Int, stopExclusive: Int): Gen[Int] =
     State(RNG.nonNegativeInt).map(n => start + n % (stopExclusive - start))
 
   // Exercise 6
 
-  //def unit[A] (a: =>A): Gen[A] = 
-  //  State[RNG, A] (rng => (a, rng))
+  def unit[A] (a: =>A): Gen[A] = State.unit(a)
 
-  //def boolean: Gen[Boolean] = 
-  //  State[RNG, Int] (nonNegativeInt)
-  //  .map(elem => elem%2 == 0) 
-
-  def unit[A](a: => A): Gen[A] = State.unit(a)
   def boolean: Gen[Boolean] = State(RNG.boolean)
 
   def double: Gen[Double] = 
     for 
        d <- State[RNG,Double] (RNG.double)
        negate <- boolean
-       invert <- boolean //monadic
-       d1 = if invert then 1.0 / d else d //non monad
+       invert <- boolean 
+       d1 = if invert then 1.0 / d else d
        d2 = if negate then -1 * d1 else d1
     yield d2 
 
@@ -104,12 +94,16 @@ object Gen:
   extension [A](self: Gen[A])
 
     def listOfN(n: Int): Gen[List[A]] =
-      if n <= 0 then unit(Nil) else self.map2(listOfN (n - 1)) (_::_) // (_ :: _)
+      if n <= 0 then State.unit(Nil)
+      else State.sequence(List.fill(n)(self))
 
+    def listOfN_(n: Int): Gen[List[A]] =
+      if n <= 0 then unit(Nil) else self.map2(listOfN(n - 1))(_::_)
 
-  // Exercise 8
+  // Exercise 8 
 
-  //So that listOfN can be generic and reusable across all gen, we dont need to modify Gen to do it and can expect it to work on all types. 
+  // so we get a good syntax for it?? 
+  // we dont have to pass the gen we are calling for in listof, because that is reduntant when its implemented on gen 
 
   // Exercise 9
 
@@ -126,9 +120,8 @@ object Gen:
   // Exercise 10
 
   extension [A](self: Gen[A])
-    def listOf(size: Gen[Int]): Gen[List[A]] =
+    def listOf(size: Gen[Int]): Gen[List[A]] = 
       size.flatMap(n => self.listOfN(n))
-
 
   // Exercise 11
 
@@ -151,7 +144,7 @@ object Exercise_12:
     summon[Gen[A]].listOfN(n)
   
   def listOfN_[A: Gen]: Int => Gen[List[A]] =
-    (n: Int) => summon[Gen[A]].listOfN(n)
+    n => summon[Gen[A]].listOfN(n)
   
   def listOfN__ [A](n: Int)(using genA: Gen[A]): Gen[List[A]] =
     genA.listOfN(n)
@@ -214,14 +207,23 @@ def forAll[A](as: Gen[A])(f: A => Boolean): Prop =
 def forAllNotSized[A] = forAll[A]
   
 extension (self: Prop)
-  infix def && (that: Prop): Prop = (maxSize, tcs, rng) => self(maxSize,tcs,rng) match
-    case Passed => that(maxSize,tcs,rng)
-    case Falsified(failure, successes) => self(maxSize,tcs,rng)
+  infix def && (that: Prop): Prop = (maxSize, tcs, rng) =>
+    val selfResult = self(maxSize, tcs, rng)
+    selfResult match
+      case Passed => that(maxSize, tcs, rng)
+      case Falsified(failure, successes) => Falsified(failure, successes)
   
   
-  infix def || (that: Prop): Prop = (maxSize, tcs, rng) => self(maxSize, tcs,rng) match
-    case Passed => self(maxSize, tcs,rng)
-    case Falsified(failure, successes) => that(maxSize, tcs,rng)
+  infix def || (that: Prop): Prop = (maxSize, tcs, rng) =>
+      val selfResult = self(maxSize, tcs, rng)
+      selfResult match
+        case Passed => Passed
+        case Falsified(failure1, successes1) =>
+          val thatResult = that(maxSize, tcs, rng)
+          thatResult match
+            case Passed => Passed
+            case Falsified(failure2, successes2) => Falsified(failure1, successes1)
+  
   
 
 
@@ -251,12 +253,12 @@ object SGen:
 
   object Prop:
 
-    def forAll[A](g: SGen[A], minSize: Int = 1, maxSize: Int = 10)(f: A => Boolean): Prop =
+    def forAll[A](g: SGen[A])(f: A => Boolean): Prop =
       (max, n, rng) =>
-        val casesPerSize = (n.toInt - 1) / (maxSize - minSize + 1) + 1
+        val casesPerSize = (n.toInt - 1)/max.toInt + 1
         val props: LazyList[Prop] =
-          LazyList.from(minSize)
-            .take((n.toInt min maxSize) - minSize + 1)
+          LazyList.from(0)
+            .take((n.toInt min max.toInt) + 1)
             .map { i => forAllNotSized(g(i))(f) }
         val prop: Prop =
           props.map[Prop](p => (max, n, rng) => 
@@ -288,21 +290,18 @@ val nonEmptyList: SGen[List[Int]] =
 object Exercise_16:
   
   import SGen.*
-  
+
   // The properties are put into a function taking `minimum` as argument to
   // allow the teachers to test them with different mutants of `minimum`.
-
-  //NOTE - I had to introduce limitation to forALL since it ran forever.. i added min and max to it as you can see below.. how are you supposed to solve this without doing that? 
-  //I also tried adjusting the Gen.choose for nonEmptyList, but that did not do anything to help  
+  
   def p1Min(minimum: List[Int] => Int): Prop = 
-    Prop.forAll(nonEmptyList, -10, 10) { list =>
+    Prop.forAll(nonEmptyList) { list =>
       val min = minimum(list)
       list.forall(_ >= min)
     }
-    
   
   def p2Min(minimum: List[Int] => Int): Prop = 
-    Prop.forAll(nonEmptyList, -10, 10) { list =>
+    Prop.forAll(nonEmptyList) { list =>
       val min = minimum(list)
       list.contains(min)
     }
